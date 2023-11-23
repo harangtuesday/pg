@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page Title</title>
+</head>
+<body>
+
+<button id="newPageButton">테이블</button>
+
+<script>
+document.getElementById("newPageButton").onclick = function () {
+    var urlParams = new URLSearchParams(window.location.search);
+    var page = Number(urlParams.get('page')) || 0;
+
+    page++;
+
+    var newUrl = window.location.pathname + '?page=' + page;
+
+    window.location.href = newUrl;
+
+};
+</script>
+    <div class="user">
+        <p><%= user.username %></p>
+        <p><%= user.point %> P</p></div>
+    </body>
+</html>

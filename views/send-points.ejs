@@ -1,0 +1,12 @@
+<!-- views/send-points.ejs -->
+
+<h2>포인트 전송</h2>
+<form action="/send-points" method="post">
+  <label for="recipient">받는 사람:</label>
+  <input type="text" id="recipient" name="recipient" required>
+  <br>
+  <label for="points">포인트:</label>
+  <input type="number" id="points" name="points" required>
+  <br>
+  <input type="submit" value="Send Points">
+</form>

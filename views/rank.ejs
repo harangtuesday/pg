@@ -1,0 +1,57 @@
+<!-- views/rank.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>순위표</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.min.js"></script>
+  <script>
+    function updateRank() {
+    // 순위 업데이트 로직
+    fetch('/rank')
+        .then(response => response.json())
+        .then(data => {
+        const rankTable = document.getElementById('rank-table');
+        rankTable.innerHTML = ''; // 기존 순위표 내용 삭제
+
+        // 새로운 순위표 생성
+        const table = document.createElement('table');
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+
+        data.users.forEach((user, index) => {
+            const row = document.createElement('tr');
+            const rankCell = document.createElement('td');
+            const usernameCell = document.createElement('td');
+            const pointCell = document.createElement('td');
+
+            rankCell.textContent = index + 1;
+            usernameCell.textContent = user.username;
+            pointCell.textContent = user.point;
+
+            row.appendChild(rankCell);
+            row.appendChild(usernameCell);
+            row.appendChild(pointCell);
+            tbody.appendChild(row);
+        });
+
+        rankTable.appendChild(table);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+const socket = io();
+socket.on('update-rank', updateRank);
+
+// 페이지 로드 시 초기 업데이트
+updateRank();
+
+  </script>
+</head>
+<body>
+  <h2>유저 순위표</h2>
+  <div id="rank-table"></div>
+  <a href="/">home</a>
+</body>
+</html>
