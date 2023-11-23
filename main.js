@@ -13,10 +13,11 @@ const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer);
 
 const db = {
-    host: 'localhost',
+    host: 'svc.sel5.cloudtype.app',
     user: 'root',
     password: '1234',
     database: 'web',
+    port: '31527',
 };
 
 app.use(express.static(path.join(__dirname, 'public')));
