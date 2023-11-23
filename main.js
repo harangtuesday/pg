@@ -569,6 +569,6 @@ function isAdmin(req, res, next) {
     }
 }
 
-httpServer.listen(port, '0.0.0.0', () => {
+httpServer.listen(port, () => {
     console.log(`Server is running at http://0.0.0.0:${port}`);
 });
