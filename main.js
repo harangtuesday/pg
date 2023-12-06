@@ -7,7 +7,7 @@ const mysql = require('mysql2/promise');
 const path = require('path');
 
 const app = express();
-const port = 80;
+const port = 2400;
 app.use(express.json());
 app.use(express.static('public'));
 
