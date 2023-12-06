@@ -588,6 +588,8 @@ app.post('/bet', async (req, res) => {
         const money = req.body.money;
         let newPoint = currentPoint;
 
+        if (Number(money) <= currentPoint){
+
         if (bet === 'b' || bet === 'r') {
             if (color === bet) {
                 newPoint = currentPoint + Number(money);
@@ -623,7 +625,7 @@ app.post('/bet', async (req, res) => {
                 newPoint = currentPoint - Number(money);
             }
         }
-
+        }
   
       await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
   
