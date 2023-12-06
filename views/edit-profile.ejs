@@ -1,19 +1,60 @@
 <!-- views/edit-profile.ejs -->
 
-<!-- 이름 수정 폼 -->
-<form method="POST" action="/edit-profile/username">
-    <label for="username">새로운 사용자명:</label>
-    <input type="text" id="username" name="username" value="<%= user.username %>" required>
-    <button type="submit">이름 수정</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/styles/user.css">
+</head>
+<body>
+    <div class="user">
+        <% if (user) { %>
+          <h2 id="user-info">
+            <span id="user-name"><%= user.username %></span>
+            <br>
+            <span id="user-point"><%= user.point %>P</span>
+          </h2>
+          <span id="tools">
+            <a href="/edit-profile" class="buttons">정보 수정</a>
+            <a href="/send-points" class="buttons">포인트<br>보내기</a>
+            <a href="/logout" class="buttons">로그아웃</a>
+          </span>
+        <% } else { %>
+          <span id="tools">
+          <a href="/login" class="buttons">로그인</a> <a href="/register" class="buttons">회원가입</a>
+          </span>
+        <% } %>
+        <div id="rank-table"></div>
+        <a href="/rank-list" class="buttons">전체 순위표</a>
+    </div>
+    <a href="/home" class="entry">홈</a>
+    <a href="/mine" class="entry">버튼</a>
+    <a href="/table" class="entry">룰렛</a>
 
-<!-- 비밀번호 수정 폼 -->
-<form method="POST" action="/edit-profile/password">
-    <label for="currentPassword">현재 비밀번호:</label>
-    <input type="password" id="currentPassword" name="currentPassword" required>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/script/user.js"></script>
     
-    <label for="newPassword">새로운 비밀번호:</label>
-    <input type="password" id="newPassword" name="newPassword" required>
-  
-    <button type="submit">비밀번호 수정</button>
-</form>
+    
+    <!-- 이름 수정 폼 -->
+    <form method="POST" action="/edit-profile/username">
+        <label for="username">새로운 사용자명:</label>
+        <input type="text" id="username" name="username" value="<%= user.username %>" required>
+        <button type="submit">이름 수정</button>
+        <link rel="stylesheet" href="/styles/edit-profile.css">
+    </form>
+
+    <!-- 비밀번호 수정 폼 -->
+    <form method="POST" action="/edit-profile/password">
+        <label for="currentPassword">현재 비밀번호:</label>
+        <input type="password" id="currentPassword" name="currentPassword" required>
+        
+        <label for="newPassword">새로운 비밀번호:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+    
+        <button type="submit">비밀번호 수정</button>
+    </form>
+</body>
+</html>
