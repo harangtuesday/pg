@@ -419,9 +419,16 @@ app.post('/edit-profile/username', isAuthenticated, async (req, res) => {
     const connection = await mysql.createConnection(db);
 
     try {
-        await connection.execute('UPDATE users SET username = ? WHERE id = ?', [newUsername, userId]);
+        // Check if the username already exists
+        const [rows] = await connection.execute('SELECT * FROM users WHERE username = ?', [newUsername]);
 
-        res.redirect('/');
+        if (rows.length > 0) {
+            res.status(400).send('이미 존재하는 사용자 이름입니다.');
+        } else {
+            await connection.execute('UPDATE users SET username = ? WHERE id = ?', [newUsername, userId]);
+
+            res.redirect('/');
+        }
     } catch (error) {
         console.error(error);
         res.status(500).send('이름 업데이트 중 오류가 발생했습니다.');
@@ -429,6 +436,7 @@ app.post('/edit-profile/username', isAuthenticated, async (req, res) => {
         await connection.end();
     }
 });
+
 
 app.post('/edit-profile/password', isAuthenticated, async (req, res) => {
     const userId = req.user.id;
