@@ -269,14 +269,18 @@
             var tc = ts * t;
             return b + c * (tc + -3 * ts + 3 * t);
         }
-        function showSeconds() {
-        
-        var date = new Date();
-        var seconds = date.getSeconds();
-        document.getElementById("seconds").innerHTML = 60 - seconds;
-        if (seconds === 0) {
-            spinRouletteWheel();
+        function easeOut(t, b, c, d) {
+            var ts = (t /= d) * t;
+            var tc = ts * t;
+            return b + c * (tc + -3 * ts + 3 * t);
         }
+        function showSeconds() {
+            var date = new Date();
+            var seconds = date.getSeconds();
+            document.getElementById("seconds").innerHTML = 30 - (seconds % 30);
+            if (seconds % 30 === 0) {
+                spinRouletteWheel();
+            }
         }
 
         setInterval(showSeconds, 1000);
