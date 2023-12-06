@@ -54,11 +54,17 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/script/user.js"></script>
 
-    <canvas id="canvas" height="220%"></canvas>
-    <p>다음 : <span id="seconds"></span></p>
-    <button id="startButton">시작하기</button>
-    <input type="text" id="bet" placeholder="배팅">
-    <input type="text" id="money" placeholder="금액">
+    <div style="display: flex;">
+        <canvas id="canvas" height="210%"></canvas>
+        <button id="startButton">시작하기</button>
+        <div>
+            <p>다음 : <span id="seconds"></span></p>
+            <input type="text" id="bet" placeholder="배팅">
+            <p>r:빨간칸 b:검은칸<br>숫자: 해당 숫자칸<br> 숫자,숫자: 2개부터 4개의 숫자에 분할 배팅</p>
+            <input type="text" id="money" placeholder="금액">
+            <p>색깔: 2배<br>숫자:1-36배 2-18배 3-12배 4-9배</p>
+        </div>
+    </div>
 
     <script>
         var canvas = document.getElementById("canvas");
