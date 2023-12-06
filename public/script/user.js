@@ -29,3 +29,21 @@ $(document).ready(function () {
     // 서버에서 'update-rank' 이벤트를 받을 때마다 업데이트
     socket.on('update-rank', updateRank);
   });
+function openSendPointsPopup() {
+    var recipient = prompt("받는 사람:");
+    var points = prompt("포인트:");
+
+    if (recipient !== null && points !== null) {
+        $.ajax({
+            type: "POST",
+            url: "/send-points",
+            data: { recipient: recipient, points: points },
+            success: function() {
+                alert("포인트가 성공적으로 전송되었습니다.");
+            },
+            error: function(error) {
+                alert("포인트 전송 중 오류가 발생했습니다: " + error);
+            }
+        });
+    }
+}
