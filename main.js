@@ -7,7 +7,7 @@ const mysql = require('mysql2/promise');
 const path = require('path');
 
 const app = express();
-const port = 2400;
+const port = 80;
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -586,48 +586,29 @@ app.post('/bet', async (req, res) => {
         const color = req.body.color;
         const num = req.body.num;
         const money = req.body.money;
-        const betNumbers = bet.split(' ');
         let newPoint = currentPoint;
-        if(bet <= currentPoint){
-            if (bet === 'b' || bet === 'r') {
-                if (color === bet) {
-                    newPoint = currentPoint + Number(money);
-                } else {
-                    newPoint = currentPoint - Number(money);
-                }
-            } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
-                if (num === Number(bet)) {
-                    newPoint = currentPoint + (Number(money) * 36);
-                } else {
-                    newPoint = currentPoint - Number(money);
-                }
+
+        if (bet === 'b' || bet === 'r') {
+            if (color === bet) {
+                newPoint = currentPoint + Number(money);
+            } else {
+                newPoint = currentPoint - Number(money);
             }
-    
-            else if (betNumbers.includes(num.toString())) {
-                let multiplier;
-            
-                switch (betNumbers.length) {
-                    case 2:
-                        multiplier = 18;
-                        break;
-                    case 3:
-                        multiplier = 12;
-                        break;
-                    case 4:
-                        multiplier = 9;
-                        break;
-                    default:
-                        multiplier = 1;  // 혹시 모르는 예외 상황에 대비한 기본 값
-                }
-                newPoint = currentPoint + (Number(money) * multiplier);
+        } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
+            if (num === Number(bet)) {
+                newPoint = currentPoint + (Number(money) * 36);
             } else {
                 newPoint = currentPoint - Number(money);
             }
         }
-        else {
-            newPoint = currentPoint;
-        }
-        
+
+        // bet이 공백으로 구분된 여러 개의 숫자인 경우
+        // const betNumbers = bet.split(' ');
+        // if (betNumbers.includes(num)) {
+        // // 일치하는 경우 처리 로직
+        // } else {
+        // // 불일치하는 경우 처리 로직
+        // }
 
   
       await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
