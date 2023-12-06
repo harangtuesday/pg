@@ -44,16 +44,18 @@
         <div id="rank-table"></div>
         <a href="/rank-list" class="buttons">전체 순위표</a>
     </div>
-    <a href="/" class="entry">홈</a>
-    <a href="/mine" class="entry">버튼</a>
-    <a href="/table" class="entry">룰렛</a>
+    <div class="entry-container">
+      <a href="/" class="entry">홈</a>
+      <a href="/mine" class="entry">버튼</a>
+      <a href="/table" class="entry">룰렛</a>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/script/user.js"></script>
 
-    <p>다음 : <span id="seconds"></span></p>
     <canvas id="canvas" height="220%"></canvas>
+    <p>다음 : <span id="seconds"></span></p>
     <button id="startButton">시작하기</button>
     <input type="text" id="bet" placeholder="배팅">
     <input type="text" id="money" placeholder="금액">
@@ -270,11 +272,6 @@
             var tc = ts * t;
             return b + c * (tc + -3 * ts + 3 * t);
         }
-        function easeOut(t, b, c, d) {
-            var ts = (t /= d) * t;
-            var tc = ts * t;
-            return b + c * (tc + -3 * ts + 3 * t);
-        }
         function showSeconds() {
             var date = new Date();
             var seconds = date.getSeconds();
@@ -283,6 +280,7 @@
                 spinRouletteWheel();
             }
         }
+
 
         setInterval(showSeconds, 1000);
 
