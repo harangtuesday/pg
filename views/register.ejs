@@ -4,8 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>회원가입</title>
+  <link rel="stylesheet" href="/styles/user.css">
+  <link rel="stylesheet" href="/styles/register.css">
 </head>
 <body>
+  <div class="user">
+      <span id="tools">
+      <a href="/login" class="buttons">로그인</a> <a href="/register" class="buttons">회원가입</a>
+      </span>
+    <div id="rank-table"></div>
+    <a href="/rank-list" class="buttons">전체 순위표</a>
+</div>
+<a href="/home" class="entry">홈</a>
+<a href="/mine" class="entry">버튼</a>
+<a href="/table" class="entry">룰렛</a>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/script/user.js"></script>
   <h2>회원가입</h2>
   <form action="/register" method="post">
     <label for="username">사용자명:</label>
@@ -14,10 +30,8 @@
     <label for="password">비밀번호:</label>
     <input type="password" id="password" name="password" required>
     <br>
+    <p><a href="/login">로그인</a></p>
     <button type="submit">회원가입</button>
   </form>
-  <p><a href="/login">로그인</a></p>
-  
-  <a href="/">home</a>
 </body>
 </html>
