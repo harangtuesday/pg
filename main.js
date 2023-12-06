@@ -601,14 +601,28 @@ app.post('/bet', async (req, res) => {
                 newPoint = currentPoint - Number(money);
             }
         }
-
-        // bet이 공백으로 구분된 여러 개의 숫자인 경우
-        // const betNumbers = bet.split(' ');
-        // if (betNumbers.includes(num)) {
-        // // 일치하는 경우 처리 로직
-        // } else {
-        // // 불일치하는 경우 처리 로직
-        // }
+        else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
+            if (num === Number(bet)) {
+                newPoint = currentPoint + (Number(money) * 36);
+            } else {
+                newPoint = currentPoint - Number(money);
+            }
+        } else if (bet.split(',').length >= 2 && bet.split(',').length <= 4) { // bet이 ','로 구분된 2개에서 4개의 숫자인 경우
+            var bets = bet.split(',').map(Number);
+            var multiplier;
+        
+            switch(bets.length) {
+                case 2: multiplier = 18; break;
+                case 3: multiplier = 12; break;
+                case 4: multiplier = 9; break;
+            }
+        
+            if (bets.includes(Number(num))) { // num이 bet에 포함된 경우
+                newPoint = currentPoint + (Number(money) * multiplier);
+            } else { // num이 bet에 포함되지 않는 경우
+                newPoint = currentPoint - Number(money);
+            }
+        }
 
   
       await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
@@ -632,8 +646,7 @@ var randomVar2 = 10
 io.on('connection', (socket) => {
     // 사용자가 페이지에 접속했을 때 실행되는 부분
     io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
-  });
-  
+});
 
 setInterval(() => {
     randomVar1 = Math.random();
