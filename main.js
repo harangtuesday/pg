@@ -7,17 +7,19 @@ const mysql = require('mysql2/promise');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = 80;
+app.use(express.json());
+app.use(express.static('public'));
 
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer);
 
 const db = {
-    host: 'svc.sel5.cloudtype.app',
-    user: 'root',
-    password: '1234',
-    database: 'web',
-    port: '31527',
+  host: 'svc.sel5.cloudtype.app',
+  user: 'root',
+  password: '1234',
+  database: 'web',
+  port: '31527',
 };
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -83,7 +85,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-    res.render('mine', {
+    res.render('table', {
         user: req.user
     });
 });
@@ -569,6 +571,96 @@ function isAdmin(req, res, next) {
     }
 }
 
-httpServer.listen(port, () => {
+app.post('/bet', async (req, res) => {
+    // 클라이언트에서 전송한 데이터를 받아옵니다.
+    const { color, number, bet, money } = req.body;
+    const userId = req.user.id;
+    
+    const connection = await mysql.createConnection(db);
+  
+    try {
+      const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+      const currentPoint = rows[0].point;
+        
+        const bet = req.body.bet;
+        const color = req.body.color;
+        const num = req.body.num;
+        const money = req.body.money;
+        const betNumbers = bet.split(' ');
+        let newPoint = currentPoint;
+        if(bet <= currentPoint){
+            if (bet === 'b' || bet === 'r') {
+                if (color === bet) {
+                    newPoint = currentPoint + Number(money);
+                } else {
+                    newPoint = currentPoint - Number(money);
+                }
+            } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
+                if (num === Number(bet)) {
+                    newPoint = currentPoint + (Number(money) * 36);
+                } else {
+                    newPoint = currentPoint - Number(money);
+                }
+            }
+    
+            else if (betNumbers.includes(num.toString())) {
+                let multiplier;
+            
+                switch (betNumbers.length) {
+                    case 2:
+                        multiplier = 18;
+                        break;
+                    case 3:
+                        multiplier = 12;
+                        break;
+                    case 4:
+                        multiplier = 9;
+                        break;
+                    default:
+                        multiplier = 1;  // 혹시 모르는 예외 상황에 대비한 기본 값
+                }
+                newPoint = currentPoint + (Number(money) * multiplier);
+            } else {
+                newPoint = currentPoint - Number(money);
+            }
+        }
+        else {
+            newPoint = currentPoint;
+        }
+        
+
+  
+      await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+  
+      res.json({
+        point: newPoint
+      });
+      io.emit('update-rank');
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('포인트를 증가시키는 동안 오류가 발생했습니다.');
+    } finally {
+      await connection.end();
+    }
+  });
+  
+
+var randomVar1 = 10
+var randomVar2 = 10
+
+io.on('connection', (socket) => {
+    // 사용자가 페이지에 접속했을 때 실행되는 부분
+    io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
+  });
+  
+
+setInterval(() => {
+    randomVar1 = Math.random();
+    randomVar2 = Math.random();
+  
+    io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
+  }, 60000);
+
+httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://0.0.0.0:${port}`);
 });
