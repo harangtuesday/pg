@@ -1,0 +1,10 @@
+<h2>Admin Page</h2>
+<ul>
+  <% users.forEach(user => { %>
+    <li>
+      <%= user.username %> <%= user.point %>P - <a href="/admin/edit/<%= user.id %>">Edit</a>
+    </li>
+  <% }); %>
+  
+  <a href="/">home</a>
+</ul>

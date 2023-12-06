@@ -1,0 +1,68 @@
+th{
+    font-size: 0.8em;
+}
+
+.entry:hover,
+.rank:hover {
+    background-color: #e6e6e6;
+    color: black;
+}
+
+.user {
+    position: fixed;
+    top: 4%;
+    right: 2%;
+    padding: 1%;
+    background-color: #c7c7c7;
+    z-index: 9999;
+    border-radius: 10px;
+    text-align: center;
+    width: 15%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.buttons {
+    font-size: 0.5em;
+    padding: 5% 0;
+    background-color: #222;
+    color: #f2f2f2;
+    border: 1px solid #f2f2f2;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    margin: 3%;
+    width: 30%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.buttons:hover {
+    background-color: #333;
+    color: #e6e6e6;
+}
+
+#user-info {
+    text-transform: uppercase; /* 모든 문자를 대문자로 변환 */
+    border: 2px solid #333; /* 태두리 추가 */
+    background-color: #f2f2f2; /* 배경색 지정 */
+    padding: 10px; /* 패딩 추가 */
+    width: 60%; /* 콘텐츠에 맞게 너비 조절 */
+    margin: 10% auto; /* 중앙 정렬 */
+    text-align: center;
+    border-radius: 10px;
+}
+
+#user-point{
+    background-color: gray;
+    padding: 0.2% 5%;
+}
+
+#tools{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
