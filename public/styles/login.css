@@ -1,0 +1,67 @@
+/* 전체 바디 스타일링 */
+body {
+    font-family: Arial, sans-serif;
+    padding: 0;
+    margin: 0;
+    background-color: #f8f8f8;
+}
+
+/* 헤더 스타일링 */
+h2 {
+    text-align: center;
+    color: #333;
+    padding: 2%;
+}
+
+/* 폼 스타일링 */
+form {
+    width: 20%;
+    text-align: center;
+    margin: 2% auto;
+    padding: 2%;
+    border: 1px solid #ccc;
+    border-radius: 1%;
+    background-color: white;
+}
+
+/* 레이블 스타일링 */
+label {
+    display: block;
+    margin-top: 2%;
+}
+
+/* 입력 필드 스타일링 */
+input[type="text"], input[type="password"] {
+    width: 80%;
+    padding: 1%;
+    border: 1px solid #ccc;
+    border-radius: 0.5%;
+    margin-bottom: 2%;
+}
+
+/* 버튼 스타일링 */
+button {
+    width: 50%;
+    padding: 1%;
+    border: none;
+    border-radius: 0.5%;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+}
+
+/* 버튼 호버 효과 */
+button:hover {
+    background-color: #0056b3;
+}
+
+/* 링크 스타일링 */
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+/* 링크 호버 효과 */
+a:hover {
+    color: #0056b3;
+}
