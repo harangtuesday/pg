@@ -1,291 +1,647 @@
-<!DOCTYPE html>
-<html>
+const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
+const mysql = require('mysql2/promise');
+const path = require('path');
 
-<head>
-    <title>룰렛</title>
-    <style>
-        #canvas {
-            height: 100%;
-            width: 50%;
-        }
+const app = express();
+const port = 2400;
+app.use(express.json());
+app.use(express.static('public'));
 
-        #startButton {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
-    <script src="/socket.io/socket.io.js"></script>
-    <link rel="stylesheet" href="/styles/user.css">
-</head>
+const httpServer = require('http').createServer(app);
+const io = require('socket.io')(httpServer);
 
-<body>
-    <div class="user">
-        <% if (user) { %>
-          <h2 id="user-info">
-            <span id="user-name"><%= user.username %></span>
-            <br>
-            <span id="user-point"><%= user.point %>P</span>
-          </h2>
-          <span id="tools">
-            <a href="/edit-profile" class="buttons">정보 수정</a>
-            <a href="/send-points" class="buttons">포인트<br>보내기</a>
-            <a href="/logout" class="buttons">로그아웃</a>
-          </span>
-        <% } else { %>
-          <span id="tools">
-          <a href="/login" class="buttons">로그인</a> <a href="/register" class="buttons">회원가입</a>
-          </span>
-        <% } %>
-        <div id="rank-table"></div>
-        <a href="/rank-list" class="buttons">전체 순위표</a>
-    </div>
-    <a href="/mine" class="entry">버튼</a>
-    <a href="/table" class="entry">룰렛</a>
+const db = {
+  host: 'svc.sel5.cloudtype.app',
+  user: 'root',
+  password: '1234',
+  database: 'web',
+  port: '31527',
+};
 
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/script/user.js"></script>
+app.use(express.static(path.join(__dirname, 'public')));
 
-    <p>다음 : <span id="seconds"></span></p>
-    <canvas id="canvas" height="220%"></canvas>
-    <button id="startButton">시작하기</button>
-    <input type="text" id="bet" placeholder="배팅">
-    <input type="text" id="money" placeholder="금액">
+passport.use(new LocalStrategy(async (username, password, done) => {
+    const connection = await mysql.createConnection(db);
 
-    <script>
-        var canvas = document.getElementById("canvas");
-        var context = canvas.getContext("2d");
-        var startButton = document.getElementById("startButton");
+    try {
+        const [rows] = await connection.execute('SELECT * FROM users WHERE username = ?', [username]);
+        const user = rows[0];
 
-        var prizes = ['36', '35', '34', '33', '32', '31', '30', '29', '28', '27', '26', '25', '24', '23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
-
-        var startAngle = 0;
-        var arc = Math.PI / (prizes.length / 2);
-        var spinTimeout = null;
-        var spinArcStart = 10;
-        var spinTime = 0;
-        var spinTimeTotal = 0;
-        var ballAngle = 0; // 추가된 구슬 각도
-        var startButton = document.getElementById("startButton");
-        startButton.style.display = "none";
-
-
-        function drawRouletteWheel() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-
-            context.strokeStyle = "black";
-            context.lineWidth = 2;
-
-            context.font = "bold 12px Arial";
-
-            for (var i = 0; i < prizes.length; i++) {
-                var angle = startAngle + i * arc;
-
-                var color = i === 36 ? "green" : (i % 2 === 0 ? "red" : "black");
-
-                context.fillStyle = color;
-
-                context.beginPath();
-                context.arc(canvas.width / 2, canvas.height / 2, 100, angle, angle + arc, false);
-                context.lineTo(canvas.width / 2, canvas.height / 2);
-                context.fill();
-                context.stroke();
-
-                context.save();
-                context.fillStyle = "white";
-                context.translate(canvas.width / 2 + Math.cos(angle + arc / 2) * 90, canvas.height / 2 + Math.sin(angle + arc / 2) * 90);
-                context.rotate(angle + arc / 2 + Math.PI / 2);
-                var text = prizes[i];
-                context.fillText(text, -context.measureText(text).width / 2, 0);
-                context.restore();
-            }
-
-            // 가운데 원 그리기
-            context.beginPath();
-            context.arc(canvas.width / 2, canvas.height / 2, 85, 0, 2 * Math.PI, false);
-            context.fillStyle = "green";
-            context.fill();
-            context.lineWidth = 2;
-            context.strokeStyle = "black";
-            context.stroke();
-
-            // 초록색 원에 선 그리기
-            for (var i = 0; i < prizes.length; i++) {
-                var angle = startAngle + i * arc;
-                context.beginPath();
-                context.moveTo(canvas.width / 2, canvas.height / 2);
-                context.lineTo(canvas.width / 2 + Math.cos(angle) * 85, canvas.height / 2 + Math.sin(angle) * 85);
-                context.strokeStyle = "gold";
-                context.stroke();
-            }
-
-            context.beginPath();
-            context.arc(canvas.width / 2, canvas.height / 2, 65, 0, 2 * Math.PI, false);
-            context.fillStyle = "brown";
-            context.fill();
-            context.lineWidth = 2;
-            context.strokeStyle = "black";
-            context.stroke();
-
-            for (var i = 0; i < 4; i++) {
-                var angle = startAngle + i * arc * 45;
-                context.beginPath();
-                context.moveTo(canvas.width / 2, canvas.height / 2);
-                context.lineTo(canvas.width / 2 + Math.cos(angle) * 65, canvas.height / 2 + Math.sin(angle) * 65);
-                context.strokeStyle = "black";
-                context.stroke();
-            }
-
-            context.beginPath();
-            context.arc(canvas.width / 2, canvas.height / 2, 10, 0, 2 * Math.PI, false);
-            context.fillStyle = "silver";
-            context.fill();
-            context.lineWidth = 2;
-            context.strokeStyle = "black";
-            context.stroke();
-
-            // 구슬 그리기
-            context.beginPath();
-            context.arc(canvas.width / 2 + Math.cos(ballAngle) * 75, canvas.height / 2 + Math.sin(ballAngle) * 75, 5, 0, 2 * Math.PI, false);
-            context.fillStyle = "white";
-            context.fill();
-            context.lineWidth = 2;
-            context.strokeStyle = "black";
-            context.stroke();
-        }
-
-        function resetRoulette() {
-        startAngle = 0; // 룰렛의 시작 각도를 초기화
-        ballAngle = 0; // 구슬의 각도를 초기화
-        drawRouletteWheel(); // 초기화된 룰렛을 그립니다.
-        }
-
-        function spinRouletteWheel() {
-            const socket = io();
-            socket.on('randomVars', function (data) {
-                a = data.var1;
-                b = data.var2;
-            });
-            resetRoulette();
-
-            spinAngleStart = a * 10 + 10;
-            spinTime = 0;
-            spinTimeTotal = b * 3 + 4 * 1000;
-            rotateWheel();
-        }
-
-        function rotateWheel() {
-            spinTime += 30;
-            if (spinTime >= spinTimeTotal) {
-                stopRotateWheel();
-                return;
-            }
-            var spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
-            startAngle += (spinAngle * Math.PI / 180);
-            ballAngle -= (spinAngle * Math.PI / 180); // 역방향으로 돌도록 수정
-            drawRouletteWheel();
-            spinTimeout = setTimeout('rotateWheel()', 30);
-        }
-
-        function calculateResult() {
-            let number = Math.floor(((((((-(ballAngle * (180 / Math.PI)) % 360) - (360 - ((startAngle * (180 / Math.PI)) % 360))) + 360) % 360) + 10) / 10) / 1);
-            let bet = document.getElementById('bet').value;
-            let money = document.getElementById('money').value;
-
-            $.ajax({
-            url: '/bet',
-            type: 'POST',
-            data: {
-                color: number % 2 === 0 ? 'r' : 'b',  // 숫자가 짝수면 'r', 홀수면 'b'
-                num: number,
-                bet: bet,    // 베팅 금액
-                money: money   // 사용자의 현재 돈
-            },
-            success: function(response) {
-                console.log(response.point);  // 업데이트된 포인트를 콘솔에 출력
-            },
-            error: function(error) {
-                console.error(error);  // 오류가 발생하면 콘솔에 출력
-            }
+        if (!user) {
+            return done(null, false, {
+                message: 'Incorrect username.'
             });
         }
 
-        function stopRotateWheel() {
-            clearTimeout(spinTimeout);
-
-            // 공의 현재 각도를 도 단위로 변환
-            var currentAngleDegrees = ballAngle * (180 / Math.PI);
-
-            // 룰렛의 현재 회전 각도를 도 단위로 변환
-            var startAngleDegrees = startAngle * (180 / Math.PI);
-
-            // 룰렛의 각도를 10으로 나눈 후 가장 가까운 정수로 반올림
-            var roundedStartAngleDegrees = Math.round(startAngleDegrees / 10) * 10;
-
-            // 룰렛의 초과 회전 각도를 계산
-            var excessAngleDegrees = roundedStartAngleDegrees - startAngleDegrees;
-
-            // 각도를 10으로 나눈 후 가장 가까운 정수로 반올림, 그리고 초과 회전 각도를 뺌
-            var nearestAngleDegrees = Math.round(currentAngleDegrees / 10) * 10 - excessAngleDegrees;
-
-            // 가장 가까운 정수 +5 또는 정수 -5 중 가장 가까운 곳으로 가도록 수정
-            var targetAngleDegrees;
-
-            if (Math.abs(nearestAngleDegrees + 5 - currentAngleDegrees) < Math.abs(nearestAngleDegrees - 5 - currentAngleDegrees)) {
-                targetAngleDegrees = nearestAngleDegrees + 5;
-            } else {
-                targetAngleDegrees = nearestAngleDegrees - 5;
-            }
-
-            // 반올림된 각도를 라디안 단위로 변환
-            var targetAngle = targetAngleDegrees * (Math.PI / 180);
-
-            // 공을 움직이게 하는 함수
-            var moveBall = function() {
-                if (Math.abs(ballAngle - targetAngle) < 0.01) {
-                    // 목표 각도에 도달하면 움직임을 멈춤
-                    clearInterval(moveBallInterval);
-                    calculateResult();
-                } else {
-                    // 공을 조금씩 움직임
-                    ballAngle += (targetAngle - ballAngle) / 10;
-                    drawRouletteWheel();
-                }
-            };
-
-            // 일정 간격으로 공을 움직임
-            var moveBallInterval = setInterval(moveBall, 30);
+        if (!bcrypt.compareSync(password, user.password)) {
+            return done(null, false, {
+                message: 'Incorrect password.'
+            });
         }
 
+        return done(null, user);
+    } catch (err) {
+        return done(err);
+    } finally {
+        await connection.end();
+    }
+}));
 
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
 
-        function easeOut(t, b, c, d) {
-            var ts = (t /= d) * t;
-            var tc = ts * t;
-            return b + c * (tc + -3 * ts + 3 * t);
+passport.deserializeUser(async (id, done) => {
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT * FROM users WHERE id = ?', [id]);
+        const user = rows[0];
+
+        done(null, user);
+    } catch (err) {
+        done(err);
+    } finally {
+        await connection.end();
+    }
+});
+
+app.use(express.urlencoded({
+    extended: true
+}));
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+app.get('/', (req, res) => {
+    res.render('home', {
+        user: req.user
+    });
+});
+
+function isAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    } else {
+        res.send(`
+      <script type="text/javascript">
+        alert("로그인이 필요합니다.");
+        window.location.href = "/login";
+      </script>
+    `);
+    }
+}
+
+app.get('/send-points', isAuthenticated, (req, res) => {
+    res.render('send-points', {
+        user: req.user
+    });
+});
+
+app.post('/send-points', isAuthenticated, async (req, res) => {
+    const senderId = req.user.id;
+    const {
+        recipient,
+        points
+    } = req.body;
+
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [recipientRows] = await connection.execute('SELECT id, point FROM users WHERE username = ?', [recipient]);
+        const recipientUser = recipientRows[0];
+
+        if (!recipientUser) {
+            return res.status(400).send('Recipient not found.');
         }
-        function showSeconds() {
-        
-        var date = new Date();
-        var seconds = date.getSeconds();
-        document.getElementById("seconds").innerHTML = 60 - seconds;
-        if (seconds === 0) {
-            spinRouletteWheel();
-        }
+
+        if (senderId === recipientUser.id) {
+            return res.status(400).send('You cannot send points to yourself.');
         }
 
-        setInterval(showSeconds, 1000);
+        const [senderRows] = await connection.execute('SELECT point FROM users WHERE id = ?', [senderId]);
+        const senderPoint = senderRows[0].point;
 
-        startButton.addEventListener("click", function() {
-            spinRouletteWheel();
+        if (senderPoint < points || points < 0) {
+            return res.status(400).send('Invalid points value.');
+        }
+
+        const newSenderPoint = senderPoint - parseInt(points);
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newSenderPoint, senderId]);
+
+        const newRecipientPoint = parseInt(recipientUser.point) + parseInt(points);
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newRecipientPoint, recipientUser.id]);
+
+        io.emit('update-rank');
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while sending points.');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/user-point', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+        const userPoint = rows[0].point;
+
+        res.json({
+            point: userPoint
         });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: 'An error occurred while fetching the user point.'
+        });
+    } finally {
+        await connection.end();
+    }
+});
 
-        spinRouletteWheel();
-        drawRouletteWheel();
+
+app.get('/table', isAuthenticated, (req, res) => {
+    res.render('table', {
+        user: req.user
+    });
+});
+
+app.get('/rank', async (req, res) => {
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT username, point FROM users ORDER BY point DESC');
+        res.json({
+            users: rows
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: 'An error occurred while fetching the rank.'
+        });
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/rank-list', async (req, res) => {
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT username, point FROM users ORDER BY point DESC');
+
+        res.render('rank', {
+            users: rows
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while fetching the rank.');
+    } finally {
+        await connection.end();
+    }
+});
+
+
+app.get('/mine', isAuthenticated, (req, res) => {
+    res.render('mine', {
+        user: req.user
+    });
+});
+
+app.post('/increase-point', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+        const currentPoint = rows[0].point;
+
+        const newPoint = currentPoint + 1;
+
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+
+        res.json({
+            point: newPoint
+        });
+        io.emit('update-rank');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while increasing the point.');
+    } finally {
+        await connection.end();
+    }
+
+});
+app.post('/increase-point-100', isAuthenticated, async (req, res) => {
+  const userId = req.user.id;
+  const connection = await mysql.createConnection(db);
+
+  try {
+      const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+      const currentPoint = rows[0].point;
+
+      const random = Math.floor(Math.random() * 100) + 1;
+
+      let newPoint = currentPoint;
+      if (currentPoint >= 1000) {
+          if (random <= 20) {
+              newPoint = currentPoint - 1000;
+          } else {
+              newPoint = currentPoint + 100;
+          }
+
+          await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+      }
+      else {
+        if (random <= 20) {
+            newPoint = 0;
+        } else {
+            newPoint = currentPoint + 100;
+        }
+
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+      }
+
+      res.json({
+          point: newPoint
+      });
+      io.emit('update-rank');
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('An error occurred while increasing the point.');
+  } finally {
+      await connection.end();
+  }
+});
+
+
+app.post('/increase-point-2x', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+        const currentPoint = rows[0].point;
+
+        const random = Math.floor(Math.random() * 100) + 1;
+
+        let newPoint;
+        if (random <= 50) {
+            newPoint = Math.round(currentPoint * 0.3333333333);
+        } else {
+            newPoint = currentPoint * 2;
+        }
+
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+
+        res.json({
+            point: newPoint
+        });
+        io.emit('update-rank');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while increasing the point.');
+    } finally {
+        await connection.end();
+    }
+});
+app.post('/increase-point-10x', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+        const currentPoint = rows[0].point;
+
+        const random = Math.floor(Math.random() * 100) + 1;
+
+        let newPoint;
+        if (random <= 90) {
+            newPoint = Math.round(currentPoint * 0.5);
+        } else {
+            newPoint = currentPoint * 10;
+        }
+
+        await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+
+        res.json({
+            point: newPoint
+        });
+        io.emit('update-rank');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while increasing the point.');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', async (req, res) => {
+    const {
+        username,
+        password
+    } = req.body;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [existingUsers] = await connection.execute('SELECT * FROM users WHERE username = ?', [username]);
+
+        if (existingUsers.length > 0) {
+            await connection.end();
+            return res.send(`
+        <script type="text/javascript">
+          alert("이름이 이미 존재합니다.");
+          window.location.href = "/register";
+        </script>
+      `);
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await connection.execute('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+        await connection.end();
+        res.redirect('/login');
+    } catch (error) {
+        console.error(error);
+        await connection.end();
+        res.redirect('/register');
+    }
+});
+
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+app.post('/login',
+    passport.authenticate('local', {
+        successRedirect: '/',
+        failureRedirect: '/login'
+    })
+);
+
+app.get('/logout', (req, res) => {
+    req.logout(err => {
+        if (err) {
+            console.error(err);
+        }
+        res.redirect('/');
+    });
+});
+
+app.get('/edit-profile', isAuthenticated, (req, res) => {
+    res.render('edit-profile', {
+        user: req.user
+    });
+});
+
+app.post('/edit-profile/username', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const newUsername = req.body.username;
+
+    const connection = await mysql.createConnection(db);
+
+    try {
+        await connection.execute('UPDATE users SET username = ? WHERE id = ?', [newUsername, userId]);
+
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('이름 업데이트 중 오류가 발생했습니다.');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.post('/edit-profile/password', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const currentPassword = req.body.currentPassword;
+    const newPassword = req.body.newPassword;
+
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT * FROM users WHERE id = ?', [userId]);
+        const user = rows[0];
+
+        if (!bcrypt.compareSync(currentPassword, user.password)) {
+            return res.status(400).send('현재 비밀번호가 틀림');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await connection.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('비밀번호 업데이트 중 오류가 발생했습니다.');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/edit-profile', isAuthenticated, (req, res) => {
+    res.render('edit-profile', {
+        user: req.user
+    });
+});
+
+app.post('/edit-profile', isAuthenticated, async (req, res) => {
+    const userId = req.user.id;
+    const newUsername = req.body.username;
+
+    const connection = await mysql.createConnection(db);
+
+    try {
+        await connection.execute('UPDATE users SET username = ? WHERE id = ?', [newUsername, userId]);
+
+        const [rows] = await connection.execute('SELECT * FROM users WHERE id = ?', [userId]);
+        const updatedUser = rows[0];
+
+        req.login(updatedUser, (err) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send('An error occurred while updating the profile.');
+            } else {
+                res.redirect('/');
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('An error occurred while updating the profile.');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/admin', isAdmin, async (req, res) => {
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT * FROM users');
+        const users = rows;
+        res.render('admin', {
+            users: users
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/admin/edit/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        const [rows] = await connection.execute('SELECT * FROM users WHERE id = ?', [userId]);
+        const user = rows[0];
+        res.render('edit-user', {
+            user: user
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin');
+    } finally {
+        await connection.end();
+    }
+});
+
+app.post('/admin/update/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    const {
+        username,
+        point,
+        isAdmin
+    } = req.body;
+
+    const connection = await mysql.createConnection(db);
+
+    try {
+        await connection.execute('UPDATE users SET username = ?, point = ? WHERE id = ?', [username, point, userId]);
+        console.log(`User ${userId} updated successfully`);
+        res.redirect('/admin');
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/admin/edit/${userId}`);
+    } finally {
+        await connection.end();
+    }
+});
+
+app.get('/admin/delete/:id', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    const connection = await mysql.createConnection(db);
+
+    try {
+        await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+        res.redirect('/admin');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/admin');
+    } finally {
+        await connection.end();
+    }
+});
+
+function isAdmin(req, res, next) {
+    if (req.isAuthenticated() && req.user.isAdmin) {
+        return next();
+    } else {
+        res.redirect('/');
+    }
+}
+
+app.post('/bet', async (req, res) => {
+    // 클라이언트에서 전송한 데이터를 받아옵니다.
+    const { color, number, bet, money } = req.body;
+    const userId = req.user.id;
+    
+    const connection = await mysql.createConnection(db);
+  
+    try {
+      const [rows] = await connection.execute('SELECT point FROM users WHERE id = ?', [userId]);
+      const currentPoint = rows[0].point;
         
-    </script>
+        const bet = req.body.bet;
+        const color = req.body.color;
+        const num = req.body.num;
+        const money = req.body.money;
+        let newPoint = currentPoint;
+
+        if (bet === 'b' || bet === 'r') {
+            if (color === bet) {
+                newPoint = currentPoint + Number(money);
+            } else {
+                newPoint = currentPoint - Number(money);
+            }
+        } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
+            if (num === Number(bet)) {
+                newPoint = currentPoint + (Number(money) * 36);
+            } else {
+                newPoint = currentPoint - Number(money);
+            }
+        }
+
+        // bet이 공백으로 구분된 여러 개의 숫자인 경우
+        // const betNumbers = bet.split(' ');
+        // if (betNumbers.includes(num)) {
+        // // 일치하는 경우 처리 로직
+        // } else {
+        // // 불일치하는 경우 처리 로직
+        // }
+
+  
+      await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
+  
+      res.json({
+        point: newPoint
+      });
+      io.emit('update-rank');
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('포인트를 증가시키는 동안 오류가 발생했습니다.');
+    } finally {
+      await connection.end();
+    }
+  });
+  
+
+var randomVar1 = 10
+var randomVar2 = 10
+
+io.on('connection', (socket) => {
+    // 사용자가 페이지에 접속했을 때 실행되는 부분
+    io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
+  });
+  
+
+setInterval(() => {
+    randomVar1 = Math.random();
+    randomVar2 = Math.random();
+  
+    io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
+  }, 60000);
+
+httpServer.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running at http://0.0.0.0:${port}`);
+});
