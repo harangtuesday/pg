@@ -8,18 +8,16 @@ const path = require('path');
 
 const app = express();
 const port = 2400;
-app.use(express.json());
-app.use(express.static('public'));
 
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer);
 
 const db = {
-  host: 'svc.sel5.cloudtype.app',
-  user: 'root',
-  password: '1234',
-  database: 'web',
-  port: '31527',
+    host: 'svc.sel5.cloudtype.app',
+    user: 'root',
+    password: '1234',
+    database: 'web',
+    port: '31527',
 };
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -570,7 +568,6 @@ function isAdmin(req, res, next) {
         res.redirect('/');
     }
 }
-
 app.post('/bet', async (req, res) => {
     // 클라이언트에서 전송한 데이터를 받아옵니다.
     const { color, number, bet, money } = req.body;
@@ -642,6 +639,6 @@ setInterval(() => {
     io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
   }, 60000);
 
-httpServer.listen(port, '0.0.0.0', () => {
+httpServer.listen(port, () => {
     console.log(`Server is running at http://0.0.0.0:${port}`);
 });
