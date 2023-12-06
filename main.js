@@ -640,7 +640,7 @@ setInterval(() => {
     randomVar2 = Math.random();
   
     io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
-  }, 60000);
+  }, 30000);
 
 httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://0.0.0.0:${port}`);
