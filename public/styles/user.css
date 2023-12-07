@@ -53,7 +53,6 @@ th{
 }
 
 #user-info {
-    text-transform: uppercase; /* 모든 문자를 대문자로 변환 */
     border: 2px solid #333; /* 태두리 추가 */
     background-color: #f2f2f2; /* 배경색 지정 */
     padding: 10px; /* 패딩 추가 */
