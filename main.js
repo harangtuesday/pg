@@ -661,7 +661,7 @@ setInterval(() => {
   }, 30000);
 
 
-  let chatMessages = [ '','','','','','','','','','' ]; // 채팅을 저장할 배열
+  let chatMessages = [ ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ' ]; // 채팅을 저장할 배열
 
   io.on('connection', (socket) => {
     console.log('a user connected');
