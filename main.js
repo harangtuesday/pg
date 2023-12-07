@@ -301,7 +301,7 @@ app.post('/increase-point-2x', isAuthenticated, async (req, res) => {
         const random = Math.floor(Math.random() * 100) + 1;
 
         let newPoint;
-        if (random <= 50) {
+        if (random <= 60) {
             newPoint = Math.round(currentPoint * 0.3333333333);
         } else {
             newPoint = currentPoint * 2;
