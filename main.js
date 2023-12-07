@@ -437,7 +437,6 @@ app.post('/edit-profile/username', isAuthenticated, async (req, res) => {
     }
 });
 
-
 app.post('/edit-profile/password', isAuthenticated, async (req, res) => {
     const userId = req.user.id;
     const currentPassword = req.body.currentPassword;
@@ -597,43 +596,39 @@ app.post('/bet', async (req, res) => {
         let newPoint = currentPoint;
 
         if (Number(money) <= currentPoint){
+                
+            if (bet === 'b' || bet === 'r') {
+                if (color === bet) {
+                    newPoint = currentPoint + Number(money);
+                } else {
+                    newPoint = currentPoint - Number(money);
+                }
+            } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
+                if (Number(num) === Number(bet)) {
+                    newPoint = currentPoint + (Number(money) * 36);
+                } else {
+                    newPoint = currentPoint - Number(money);
+                }
+            }
+            else if (bet.split(',').length >= 2 && bet.split(',').length <= 4) { // bet이 ','로 구분된 2개에서 4개의 숫자인 경우
+                var bets = bet.split(',').map(Number);
+                var multiplier;
+            
+                switch(bets.length) {
+                    case 2: multiplier = 18; break;
+                    case 3: multiplier = 12; break;
+                    case 4: multiplier = 9; break;
+                }
+            
+                if (bets.includes(Number(num))) { // num이 bet에 포함된 경우
+                    newPoint = currentPoint + (Number(money) * multiplier);
+                } else { // num이 bet에 포함되지 않는 경우
+                    newPoint = currentPoint - Number(money);
+                }
+            }
+            
+        }
 
-        if (bet === 'b' || bet === 'r') {
-            if (color === bet) {
-                newPoint = currentPoint + Number(money);
-            } else {
-                newPoint = currentPoint - Number(money);
-            }
-        } else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
-            if (num === Number(bet)) {
-                newPoint = currentPoint + (Number(money) * 36);
-            } else {
-                newPoint = currentPoint - Number(money);
-            }
-        }
-        else if (!isNaN(bet)) {  // bet이 숫자인 경우 num과 비교
-            if (num === Number(bet)) {
-                newPoint = currentPoint + (Number(money) * 36);
-            } else {
-                newPoint = currentPoint - Number(money);
-            }
-        } else if (bet.split(',').length >= 2 && bet.split(',').length <= 4) { // bet이 ','로 구분된 2개에서 4개의 숫자인 경우
-            var bets = bet.split(',').map(Number);
-            var multiplier;
-        
-            switch(bets.length) {
-                case 2: multiplier = 18; break;
-                case 3: multiplier = 12; break;
-                case 4: multiplier = 9; break;
-            }
-        
-            if (bets.includes(Number(num))) { // num이 bet에 포함된 경우
-                newPoint = currentPoint + (Number(money) * multiplier);
-            } else { // num이 bet에 포함되지 않는 경우
-                newPoint = currentPoint - Number(money);
-            }
-        }
-        }
   
       await connection.execute('UPDATE users SET point = ? WHERE id = ?', [newPoint, userId]);
   
