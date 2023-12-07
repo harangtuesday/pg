@@ -174,7 +174,13 @@
         drawRouletteWheel(); // 초기화된 룰렛을 그립니다.
         }
 
+        
+        var bet;
+        var money;
+
         function spinRouletteWheel() {
+            bet = document.getElementById('bet').value;
+            money = document.getElementById('money').value;
             const socket = io();
             socket.on('randomVars', function (data) {
                 a = data.var1;
@@ -203,8 +209,6 @@
 
         function calculateResult() {
             let number = Math.floor(((((((-(ballAngle * (180 / Math.PI)) % 360) - (360 - ((startAngle * (180 / Math.PI)) % 360))) + 360) % 360) + 10) / 10) / 1);
-            let bet = document.getElementById('bet').value;
-            let money = document.getElementById('money').value;
 
             $.ajax({
             url: '/bet',
