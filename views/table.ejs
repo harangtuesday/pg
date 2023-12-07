@@ -63,6 +63,40 @@
             <p>r:빨간칸 b:검은칸<br>숫자: 해당 숫자칸<br> 숫자,숫자: 2개부터 4개의 숫자에 분할 배팅</p>
             <input type="text" id="money" placeholder="금액">
             <p>색깔: 2배<br>숫자:1-36배 2-18배 3-12배 4-9배</p>
+            <div class="chat">
+                <ul id="chat"></ul>
+                <form id="form">
+                <input id="input" type="text" />
+                <button>enter</button>
+                </form>
+                <script src="/socket.io/socket.io.js"></script>
+                <script>
+                var socket = io();
+                var form = document.getElementById('form');
+                var input = document.getElementById('input');
+                var chat = document.getElementById('chat');
+
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (input.value) {
+                        var username = document.getElementById('user-name').textContent;
+                        var message = input.value;
+                        socket.emit('new chat message', {username: username, message: message});
+                        input.value = '';
+                    }
+                });
+
+                socket.on('chat messages', function(messages){
+                    chat.innerHTML = '';
+                    messages.forEach(message => {
+                    var item = document.createElement('li');
+                    item.textContent = message;
+                    chat.appendChild(item);
+                    });
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
+                </script>
+            </div>
         </div>
     </div>
 
