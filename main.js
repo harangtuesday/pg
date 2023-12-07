@@ -660,6 +660,30 @@ setInterval(() => {
     io.emit('randomVars', { var1: randomVar1, var2: randomVar2 });
   }, 30000);
 
+
+  let chatMessages = [ '','','','','','','','','','' ]; // 채팅을 저장할 배열
+
+  io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.emit('chat messages', chatMessages); // 새로운 사용자에게 현재 채팅 보내기
+    
+    // 클라이언트에서 새로운 채팅 메시지를 받았을 때
+socket.on('new chat message', (data) => {
+    let message = data.username + ": " + data.message;
+    chatMessages.push(message);
+    if (chatMessages.length > 10) {
+      chatMessages.shift();
+    }
+    io.emit('chat messages', chatMessages);
+  });
+  
+  
+    
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+  });
+  
 httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server is running at http://0.0.0.0:${port}`);
 });
